@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizForge — AI Quiz Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#14141f;--card:#1a1a2e;--border:#2a2a40;--primary:#7c3aed;--primary-glow:#7c3aed44;--green:#10b981;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;--white:#fff}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,var(--primary-glow),transparent 70%);pointer-events:none;z-index:0}
+
+.container{max-width:700px;margin:0 auto;padding:40px 20px;position:relative;z-index:1}
+h1{font-size:2.2rem;font-weight:800;text-align:center;background:linear-gradient(135deg,#7c3aed,#a78bfa,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.subtitle{text-align:center;color:var(--muted);font-size:.95rem;margin-bottom:36px}
+
+/* Upload Area */
+.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:16px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .3s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:var(--card)}
+.upload-zone svg{width:48px;height:48px;color:var(--primary);margin-bottom:12px}
+.upload-zone p{color:var(--muted);font-size:.9rem;margin-top:8px}
+.upload-zone .fname{color:var(--primary);font-weight:600;margin-top:12px;font-size:.95rem}
+
+/* Text area fallback */
+.or-divider{text-align:center;color:var(--muted);margin:20px 0;font-size:.85rem}
+textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text);font-family:inherit;font-size:.9rem;resize:vertical;min-height:100px;outline:none;transition:border .3s}
+textarea:focus{border-color:var(--primary)}
+
+/* Button */
+.btn{display:block;width:100%;padding:16px;margin-top:24px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.3px}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--primary-glow)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Loader */
+.loader{display:none;text-align:center;margin:40px 0}
+.loader.active{display:block}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{color:var(--muted);font-size:.9rem}
+
+/* Quiz */
+.quiz-area{display:none;margin-top:20px}
+.quiz-area.active{display:block}
+.progress{display:flex;gap:8px;margin-bottom:28px;justify-content:center}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all .3s}
+.dot.done{background:var(--green)}.dot.current{background:var(--primary);box-shadow:0 0 12px var(--primary-glow)}
+
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.q-num{color:var(--primary);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.q-text{font-size:1.1rem;font-weight:600;line-height:1.5;margin-bottom:24px}
+
+.options{display:flex;flex-direction:column;gap:10px}
+.opt-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--text);font-size:.95rem;text-align:left;cursor:pointer;transition:all .25s;font-family:inherit}
+.opt-btn:hover:not(.locked){border-color:var(--primary);background:#1e1e3a}
+.opt-btn.correct{border-color:var(--green);background:#10b98118;color:var(--green);font-weight:600}
+.opt-btn.wrong{border-color:var(--red);background:#ef444418;color:var(--red)}
+.opt-btn.locked{cursor:default;opacity:.7}
+.opt-btn.locked.correct{opacity:1}
+
+.next-btn{margin-top:20px;padding:12px 32px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;display:none;float:right;transition:all .3s}
+.next-btn:hover{background:#6d28d9}
+
+/* Score */
+.score-card{text-align:center;animation:fadeUp .4s ease}
+.score-num{font-size:4rem;font-weight:800;background:linear-gradient(135deg,#7c3aed,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.score-label{color:var(--muted);font-size:1rem;margin-top:4px}
+.retry-btn{margin-top:28px;padding:14px 40px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="container">
+  <h1>⚡ QuizForge</h1>
+  <p class="subtitle">Upload a document, get an AI-powered quiz in seconds</p>
+
+  <div id="upload-section">
+    <div class="upload-zone" id="dropzone">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16V4m0 0L8 8m4-4l4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/></svg>
+      <p>Drop a <strong>PDF</strong> or <strong>TXT</strong> file here, or click to browse</p>
+      <div class="fname" id="fname"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf,.txt" hidden>
+    <div class="or-divider">— or paste text directly —</div>
+    <textarea id="pasteText" placeholder="Paste your study material here..."></textarea>
+    <button class="btn" id="generateBtn" onclick="generate()">Generate Quiz</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Generating your quiz with AI...</p>
+  </div>
+
+  <div class="quiz-area" id="quizArea">
+    <div class="progress" id="progress"></div>
+    <div id="quizContent"></div>
+  </div>
+</div>
+
+<script>
+const dropzone=document.getElementById('dropzone'),fileInput=document.getElementById('fileInput'),fnameEl=document.getElementById('fname');
+let selectedFile=null,quizData=[],current=0,score=0;
+
+dropzone.addEventListener('click',()=>fileInput.click());
+dropzone.addEventListener('dragover',e=>{e.preventDefault();dropzone.classList.add('drag')});
+dropzone.addEventListener('dragleave',()=>dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop',e=>{e.preventDefault();dropzone.classList.remove('drag');if(e.dataTransfer.files.length){selectedFile=e.dataTransfer.files[0];fnameEl.textContent=selectedFile.name}});
+fileInput.addEventListener('change',()=>{if(fileInput.files.length){selectedFile=fileInput.files[0];fnameEl.textContent=selectedFile.name}});
+
+async function generate(){
+  const text=document.getElementById('pasteText').value.trim();
+  if(!selectedFile&&!text){alert('Please upload a file or paste text.');return}
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('loader').classList.add('active');
+
+  const fd=new FormData();
+  if(selectedFile)fd.append('file',selectedFile);
+  else fd.append('text',text);
+
+  try{
+    const res=await fetch('/generate-quiz',{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.status!=='success')throw new Error(data.message||'Generation failed');
+    quizData=data.quiz;current=0;score=0;
+    document.getElementById('loader').classList.remove('active');
+    showQuiz();
+  }catch(e){
+    alert('Error: '+e.message);
+    document.getElementById('loader').classList.remove('active');
+    document.getElementById('upload-section').style.display='block';
+  }
+}
+
+function showQuiz(){
+  const area=document.getElementById('quizArea');area.classList.add('active');
+  renderProgress();renderQuestion();
+}
+
+function renderProgress(){
+  const p=document.getElementById('progress');
+  p.innerHTML=quizData.map((_,i)=>`<div class="dot ${i<current?'done':''} ${i===current?'current':''}"></div>`).join('');
+}
+
+function renderQuestion(){
+  if(current>=quizData.length){showScore();return}
+  const q=quizData[current];
+  document.getElementById('quizContent').innerHTML=`
+    <div class="q-card">
+      <div class="q-num">Question ${q.id} of ${quizData.length}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="options">${q.options.map((o,i)=>`<button class="opt-btn" onclick="pick(this,'${o.replace(/'/g,"\\'")}','${q.correct_answer.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>
+      <button class="next-btn" id="nextBtn" onclick="next()">Next →</button>
+    </div>`;
+}
+
+function pick(btn,chosen,correct){
+  const btns=btn.parentElement.querySelectorAll('.opt-btn');
+  if(btn.classList.contains('locked'))return;
+  btns.forEach(b=>{b.classList.add('locked');if(b.textContent===correct)b.classList.add('correct')});
+  if(chosen!==correct)btn.classList.add('wrong'); else score++;
+  document.getElementById('nextBtn').style.display='inline-block';
+}
+
+function next(){current++;renderProgress();renderQuestion()}
+
+function showScore(){
+  document.getElementById('quizContent').innerHTML=`
+    <div class="q-card score-card">
+      <div class="score-num">${score}/${quizData.length}</div>
+      <div class="score-label">Questions Correct</div>
+      <button class="retry-btn" onclick="retry()">Try Again</button>
+    </div>`;
+  document.getElementById('progress').innerHTML='';
+}
+
+function retry(){
+  document.getElementById('quizArea').classList.remove('active');
+  document.getElementById('upload-section').style.display='block';
+  selectedFile=null;fnameEl.textContent='';
+  document.getElementById('pasteText').value='';
+  fileInput.value='';
+}
+</script>
+</body>
+</html>
