@@ -28,6 +28,7 @@ class QuizQuestion(BaseModel):
     question: str
     options: List[str] = Field(description="Exactly 4 multiple choice options")
     correct_answer: str = Field(description="The exact string matching the correct option")
+    explanation: str = Field(description="Brief explanation of why the correct answer is right")
 
 class QuizOutput(BaseModel):
     quiz: List[QuizQuestion]
@@ -35,6 +36,8 @@ class QuizOutput(BaseModel):
 # ---------- LangGraph State ----------
 class AgentState(TypedDict):
     raw_text: str
+    num_questions: int
+    difficulty: str
     quiz_json: List[dict]
 
 # ---------- LangGraph Nodes ----------
@@ -55,11 +58,21 @@ def generate_quiz_node(state: AgentState):
     )
     structured_llm = llm.with_structured_output(QuizOutput)
 
+    num_q = state.get("num_questions", 5)
+    difficulty = state.get("difficulty", "medium")
+
+    difficulty_guide = {
+        "easy": "Make the questions straightforward and test basic recall of facts directly stated in the text.",
+        "medium": "Make the questions moderately challenging, requiring understanding of concepts.",
+        "hard": "Make the questions very challenging, requiring deep analysis, inference, and connecting multiple concepts.",
+    }
+
     prompt = (
-        "You are an expert quiz master. Based on the following text, generate exactly 5 "
-        "high-quality multiple choice questions that test understanding of the key concepts. "
+        f"You are an expert quiz master. Based on the following text, generate exactly {num_q} "
+        f"high-quality multiple choice questions at a {difficulty.upper()} difficulty level. "
+        f"{difficulty_guide.get(difficulty, difficulty_guide['medium'])} "
         "Each question must have exactly 4 options with one correct answer. "
-        "Make the questions challenging but fair.\n\n"
+        "For each question, provide a brief explanation of why the correct answer is right.\n\n"
         f"TEXT:\n{state['raw_text']}"
     )
 
@@ -82,9 +95,17 @@ quiz_agent = workflow.compile()
 async def generate_quiz(
     file: Optional[UploadFile] = File(None),
     text: Optional[str] = Form(None),
+    num_questions: int = Form(5),
+    difficulty: str = Form("medium"),
 ):
-    """Accept a file upload (PDF/TXT) or raw text, return 5 quiz questions."""
+    """Accept a file upload (PDF/TXT) or raw text, return quiz questions."""
     raw_text = ""
+
+    # Validate inputs
+    if num_questions not in (5, 10, 20):
+        num_questions = 5
+    if difficulty not in ("easy", "medium", "hard"):
+        difficulty = "medium"
 
     if file:
         content = await file.read()
@@ -103,13 +124,18 @@ async def generate_quiz(
         return {"status": "error", "message": "Extracted text is empty"}
 
     # Run the LangGraph agent
-    initial_state: AgentState = {"raw_text": raw_text, "quiz_json": []}
+    initial_state: AgentState = {
+        "raw_text": raw_text,
+        "num_questions": num_questions,
+        "difficulty": difficulty,
+        "quiz_json": [],
+    }
     try:
         result = quiz_agent.invoke(initial_state)
     except Exception as e:
         error_msg = str(e)
         if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-            return {"status": "error", "message": "Gemini API rate limit hit. Please wait 1 minute and try again."}
+            return {"status": "error", "message": "API rate limit hit. Please wait a minute and try again."}
         return {"status": "error", "message": f"AI generation failed: {error_msg[:200]}"}
 
     return {"status": "success", "quiz": result["quiz_json"]}

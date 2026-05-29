@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--surface:#14141f;--card:#1a1a2e;--border:#2a2a40;--primary:#7c3aed;--primary-glow:#7c3aed44;--green:#10b981;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;--white:#fff}
+:root{--bg:#0a0a0f;--surface:#14141f;--card:#1a1a2e;--border:#2a2a40;--primary:#7c3aed;--primary-glow:#7c3aed44;--green:#10b981;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;--white:#fff;--yellow:#f59e0b}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .bg-glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,var(--primary-glow),transparent 70%);pointer-events:none;z-index:0}
 
@@ -27,6 +27,13 @@ h1{font-size:2.2rem;font-weight:800;text-align:center;background:linear-gradient
 textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text);font-family:inherit;font-size:.9rem;resize:vertical;min-height:100px;outline:none;transition:border .3s}
 textarea:focus{border-color:var(--primary)}
 
+/* Settings Row */
+.settings-row{display:flex;gap:12px;margin-top:20px}
+.setting-group{flex:1;display:flex;flex-direction:column;gap:6px}
+.setting-group label{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.setting-group select{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:inherit;font-size:.9rem;outline:none;cursor:pointer;transition:border .3s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.setting-group select:focus{border-color:var(--primary)}
+
 /* Button */
 .btn{display:block;width:100%;padding:16px;margin-top:24px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.3px}
 .btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--primary-glow)}
@@ -42,9 +49,9 @@ textarea:focus{border-color:var(--primary)}
 /* Quiz */
 .quiz-area{display:none;margin-top:20px}
 .quiz-area.active{display:block}
-.progress{display:flex;gap:8px;margin-bottom:28px;justify-content:center}
+.progress{display:flex;gap:6px;margin-bottom:28px;justify-content:center;flex-wrap:wrap}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all .3s}
-.dot.done{background:var(--green)}.dot.current{background:var(--primary);box-shadow:0 0 12px var(--primary-glow)}
+.dot.done{background:var(--green)}.dot.current{background:var(--primary);box-shadow:0 0 12px var(--primary-glow)}.dot.wrong-dot{background:var(--red)}
 
 .q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;animation:fadeUp .4s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -59,6 +66,14 @@ textarea:focus{border-color:var(--primary)}
 .opt-btn.locked{cursor:default;opacity:.7}
 .opt-btn.locked.correct{opacity:1}
 
+/* Explanation */
+.explanation{margin-top:18px;padding:16px;background:#1e1b4b;border:1px solid #312e81;border-radius:12px;display:none;animation:fadeUp .3s ease}
+.explanation.show{display:block}
+.explanation .exp-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.explanation .exp-label.right{color:var(--green)}
+.explanation .exp-label.wrong-label{color:var(--red)}
+.explanation .exp-text{font-size:.9rem;color:var(--muted);line-height:1.5}
+
 .next-btn{margin-top:20px;padding:12px 32px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;display:none;float:right;transition:all .3s}
 .next-btn:hover{background:#6d28d9}
 
@@ -66,7 +81,15 @@ textarea:focus{border-color:var(--primary)}
 .score-card{text-align:center;animation:fadeUp .4s ease}
 .score-num{font-size:4rem;font-weight:800;background:linear-gradient(135deg,#7c3aed,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .score-label{color:var(--muted);font-size:1rem;margin-top:4px}
-.retry-btn{margin-top:28px;padding:14px 40px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer}
+.score-msg{color:var(--text);font-size:1.1rem;margin-top:16px;font-weight:500}
+.retry-btn{margin-top:28px;padding:14px 40px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s}
+.retry-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--primary-glow)}
+
+/* Difficulty badge */
+.diff-badge{display:inline-block;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;margin-left:10px}
+.diff-badge.easy{background:#10b98120;color:var(--green)}
+.diff-badge.medium{background:#f59e0b20;color:var(--yellow)}
+.diff-badge.hard{background:#ef444420;color:var(--red)}
 </style>
 </head>
 <body>
@@ -84,12 +107,32 @@ textarea:focus{border-color:var(--primary)}
     <input type="file" id="fileInput" accept=".pdf,.txt" hidden>
     <div class="or-divider">— or paste text directly —</div>
     <textarea id="pasteText" placeholder="Paste your study material here..."></textarea>
+
+    <div class="settings-row">
+      <div class="setting-group">
+        <label>Questions</label>
+        <select id="numQuestions">
+          <option value="5" selected>5 Questions</option>
+          <option value="10">10 Questions</option>
+          <option value="20">20 Questions</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+    </div>
+
     <button class="btn" id="generateBtn" onclick="generate()">Generate Quiz</button>
   </div>
 
   <div class="loader" id="loader">
     <div class="spinner"></div>
-    <p>Generating your quiz with AI...</p>
+    <p id="loaderText">Generating your quiz with AI...</p>
   </div>
 
   <div class="quiz-area" id="quizArea">
@@ -100,7 +143,7 @@ textarea:focus{border-color:var(--primary)}
 
 <script>
 const dropzone=document.getElementById('dropzone'),fileInput=document.getElementById('fileInput'),fnameEl=document.getElementById('fname');
-let selectedFile=null,quizData=[],current=0,score=0;
+let selectedFile=null,quizData=[],current=0,score=0,answered=[];
 
 dropzone.addEventListener('click',()=>fileInput.click());
 dropzone.addEventListener('dragover',e=>{e.preventDefault();dropzone.classList.add('drag')});
@@ -111,18 +154,25 @@ fileInput.addEventListener('change',()=>{if(fileInput.files.length){selectedFile
 async function generate(){
   const text=document.getElementById('pasteText').value.trim();
   if(!selectedFile&&!text){alert('Please upload a file or paste text.');return}
+
+  const numQ=document.getElementById('numQuestions').value;
+  const diff=document.getElementById('difficulty').value;
+
   document.getElementById('upload-section').style.display='none';
   document.getElementById('loader').classList.add('active');
+  document.getElementById('loaderText').textContent=`Generating ${numQ} ${diff} questions with AI...`;
 
   const fd=new FormData();
   if(selectedFile)fd.append('file',selectedFile);
   else fd.append('text',text);
+  fd.append('num_questions',numQ);
+  fd.append('difficulty',diff);
 
   try{
     const res=await fetch('/generate-quiz',{method:'POST',body:fd});
     const data=await res.json();
     if(data.status!=='success')throw new Error(data.message||'Generation failed');
-    quizData=data.quiz;current=0;score=0;
+    quizData=data.quiz;current=0;score=0;answered=new Array(quizData.length).fill(null);
     document.getElementById('loader').classList.remove('active');
     showQuiz();
   }catch(e){
@@ -139,36 +189,74 @@ function showQuiz(){
 
 function renderProgress(){
   const p=document.getElementById('progress');
-  p.innerHTML=quizData.map((_,i)=>`<div class="dot ${i<current?'done':''} ${i===current?'current':''}"></div>`).join('');
+  p.innerHTML=quizData.map((_,i)=>{
+    let cls='dot';
+    if(i<current){cls+=answered[i]?' done':' wrong-dot'}
+    if(i===current)cls+=' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
 }
+
+function escAttr(s){return s.replace(/'/g,"&#39;").replace(/"/g,"&quot;")}
 
 function renderQuestion(){
   if(current>=quizData.length){showScore();return}
   const q=quizData[current];
+  const diff=document.getElementById('difficulty').value;
   document.getElementById('quizContent').innerHTML=`
     <div class="q-card">
-      <div class="q-num">Question ${q.id} of ${quizData.length}</div>
+      <div class="q-num">Question ${current+1} of ${quizData.length}<span class="diff-badge ${diff}">${diff}</span></div>
       <div class="q-text">${q.question}</div>
-      <div class="options">${q.options.map((o,i)=>`<button class="opt-btn" onclick="pick(this,'${o.replace(/'/g,"\\'")}','${q.correct_answer.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>
-      <button class="next-btn" id="nextBtn" onclick="next()">Next →</button>
+      <div class="options">${q.options.map(o=>`<button class="opt-btn" onclick="pick(this,'${escAttr(o)}',${current})">${o}</button>`).join('')}</div>
+      <div class="explanation" id="explanation">
+        <div class="exp-label" id="expLabel"></div>
+        <div class="exp-text" id="expText"></div>
+      </div>
+      <button class="next-btn" id="nextBtn" onclick="next()">${current<quizData.length-1?'Next →':'See Results'}</button>
     </div>`;
 }
 
-function pick(btn,chosen,correct){
-  const btns=btn.parentElement.querySelectorAll('.opt-btn');
+function pick(btn,chosen,qIdx){
   if(btn.classList.contains('locked'))return;
+  const q=quizData[qIdx];
+  const correct=q.correct_answer;
+  const isRight=chosen===correct;
+
+  const btns=btn.parentElement.querySelectorAll('.opt-btn');
   btns.forEach(b=>{b.classList.add('locked');if(b.textContent===correct)b.classList.add('correct')});
-  if(chosen!==correct)btn.classList.add('wrong'); else score++;
+  if(!isRight)btn.classList.add('wrong');
+  if(isRight)score++;
+  answered[qIdx]=isRight;
+
+  // Show explanation
+  const expEl=document.getElementById('explanation');
+  const expLabel=document.getElementById('expLabel');
+  const expText=document.getElementById('expText');
+  expLabel.textContent=isRight?'✓ Correct!':'✗ Incorrect';
+  expLabel.className='exp-label '+(isRight?'right':'wrong-label');
+  expText.textContent=q.explanation||'No explanation available.';
+  expEl.classList.add('show');
+
   document.getElementById('nextBtn').style.display='inline-block';
+  renderProgress();
 }
 
 function next(){current++;renderProgress();renderQuestion()}
 
 function showScore(){
+  const pct=Math.round((score/quizData.length)*100);
+  let msg='';
+  if(pct===100)msg='🏆 Perfect score! Outstanding!';
+  else if(pct>=80)msg='🔥 Great job! Almost perfect!';
+  else if(pct>=60)msg='👍 Good effort! Keep studying!';
+  else if(pct>=40)msg='📚 Room for improvement. Review the material.';
+  else msg='💪 Keep practicing! Try an easier difficulty.';
+
   document.getElementById('quizContent').innerHTML=`
     <div class="q-card score-card">
       <div class="score-num">${score}/${quizData.length}</div>
-      <div class="score-label">Questions Correct</div>
+      <div class="score-label">${pct}% Correct</div>
+      <div class="score-msg">${msg}</div>
       <button class="retry-btn" onclick="retry()">Try Again</button>
     </div>`;
   document.getElementById('progress').innerHTML='';
