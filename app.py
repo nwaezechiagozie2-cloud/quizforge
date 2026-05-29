@@ -54,7 +54,7 @@ def generate_quiz_node(state: AgentState):
         model="openai/gpt-oss-20b",
         temperature=0.7,
         base_url="https://integrate.api.nvidia.com/v1",
-        api_key=os.getenv("NVIDIA_API_KEY"),
+        api_key=os.getenv("NVIDIA_API_KEY") or os.getenv("OPENAI_API_KEY"),
     )
     structured_llm = llm.with_structured_output(QuizOutput)
 

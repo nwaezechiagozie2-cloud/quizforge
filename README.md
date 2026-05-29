@@ -2,7 +2,6 @@
 
 AI-powered quiz generator that turns any document into an interactive multiple-choice quiz.
 
-##visit here: https://quizforge-five.vercel.app/
 
 Built with **FastAPI**, **LangGraph**, and **NVIDIA NIM** (OpenAI-compatible API).
 
