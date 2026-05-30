@@ -197,8 +197,6 @@ function renderProgress(){
   }).join('');
 }
 
-function escAttr(s){return s.replace(/'/g,"&#39;").replace(/"/g,"&quot;")}
-
 function renderQuestion(){
   if(current>=quizData.length){showScore();return}
   const q=quizData[current];
@@ -207,7 +205,7 @@ function renderQuestion(){
     <div class="q-card">
       <div class="q-num">Question ${current+1} of ${quizData.length}<span class="diff-badge ${diff}">${diff}</span></div>
       <div class="q-text">${q.question}</div>
-      <div class="options">${q.options.map(o=>`<button class="opt-btn" onclick="pick(this,'${escAttr(o)}',${current})">${o}</button>`).join('')}</div>
+      <div class="options">${q.options.map((o,idx)=>`<button class="opt-btn" onclick="pick(this,${idx},${current})">${o}</button>`).join('')}</div>
       <div class="explanation" id="explanation">
         <div class="exp-label" id="expLabel"></div>
         <div class="exp-text" id="expText"></div>
@@ -216,14 +214,62 @@ function renderQuestion(){
     </div>`;
 }
 
-function pick(btn,chosen,qIdx){
+function pick(btn,chosenIdx,qIdx){
   if(btn.classList.contains('locked'))return;
   const q=quizData[qIdx];
   const correct=q.correct_answer;
-  const isRight=chosen===correct;
-
+  
+  let correctIdx=-1;
+  const normCorrect=correct.trim().toLowerCase();
+  const normOptions=q.options.map(o=>o.trim().toLowerCase());
+  
+  // 1. Direct match (case-insensitive, trimmed)
+  correctIdx=normOptions.indexOf(normCorrect);
+  
+  // 2. If no direct match, check if correct_answer is a letter (A, B, C, D)
+  if(correctIdx===-1){
+    const letters=['a','b','c','d'];
+    const letterMatch=normCorrect.match(/^[a-d]$/);
+    if(letterMatch){
+      correctIdx=letters.indexOf(letterMatch[0]);
+    }
+  }
+  
+  // 3. Check if correct_answer is a number/index (1-4 or 0-3)
+  if(correctIdx===-1){
+    if(normCorrect==='0'||normCorrect==='1'||normCorrect==='2'||normCorrect==='3'){
+      correctIdx=parseInt(normCorrect,10);
+    }else if(normCorrect==='1'||normCorrect==='2'||normCorrect==='3'||normCorrect==='4'){
+      correctIdx=parseInt(normCorrect,10)-1;
+    }
+  }
+  
+  // 4. Check if correct_answer starts with option letter prefix (e.g. "A. Option Text" or "A) Option Text")
+  if(correctIdx===-1){
+    const prefixMatch=normCorrect.match(/^([a-d])[\s\.\)\:\-]/);
+    if(prefixMatch){
+      correctIdx=['a','b','c','d'].indexOf(prefixMatch[1]);
+    }
+  }
+  
+  // 5. If we still don't have a match, fall back to loose substring matching
+  if(correctIdx===-1){
+    correctIdx=normOptions.findIndex(o=>o.includes(normCorrect)||normCorrect.includes(o));
+  }
+  
+  // If we couldn't resolve, default to index 0
+  if(correctIdx===-1){
+    correctIdx=0;
+  }
+  
+  const isRight=chosenIdx===correctIdx;
   const btns=btn.parentElement.querySelectorAll('.opt-btn');
-  btns.forEach(b=>{b.classList.add('locked');if(b.textContent===correct)b.classList.add('correct')});
+  
+  btns.forEach((b,idx)=>{
+    b.classList.add('locked');
+    if(idx===correctIdx)b.classList.add('correct');
+  });
+  
   if(!isRight)btn.classList.add('wrong');
   if(isRight)score++;
   answered[qIdx]=isRight;
