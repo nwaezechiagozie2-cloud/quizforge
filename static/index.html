@@ -235,12 +235,15 @@ function pick(btn,chosenIdx,qIdx){
     }
   }
   
-  // 3. Check if correct_answer is a number/index (1-4 or 0-3)
+  // 3. Check if correct_answer is numeric index (prefer 1-based, then 0-based)
   if(correctIdx===-1){
-    if(normCorrect==='0'||normCorrect==='1'||normCorrect==='2'||normCorrect==='3'){
-      correctIdx=parseInt(normCorrect,10);
-    }else if(normCorrect==='1'||normCorrect==='2'||normCorrect==='3'||normCorrect==='4'){
-      correctIdx=parseInt(normCorrect,10)-1;
+    const numericCorrect=Number(normCorrect);
+    if(Number.isInteger(numericCorrect)){
+      if(numericCorrect>=1&&numericCorrect<=q.options.length){
+        correctIdx=numericCorrect-1;
+      }else if(numericCorrect>=0&&numericCorrect<q.options.length){
+        correctIdx=numericCorrect;
+      }
     }
   }
   
